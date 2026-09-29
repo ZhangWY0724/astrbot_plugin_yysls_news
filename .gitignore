@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+data/
+screenshots/
+.env
+dist/
+credential.key
+credential.enc
+credential.tmp
+*.enc

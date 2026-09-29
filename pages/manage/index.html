@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>资讯管理</title>
+    <style>
+      :root { color-scheme: light dark; --bg:#f4f6f8; --panel:#fff; --text:#18212f; --muted:#667085; --line:#d8dee8; --accent:#2e6eea; --danger:#bd2937; }
+      [data-theme="dark"] { --bg:#10151c; --panel:#1a222d; --text:#edf2f8; --muted:#a3afbf; --line:#344154; --accent:#75a4ff; --danger:#ff8f98; }
+      * { box-sizing:border-box; }
+      body { margin:0; padding:24px; background:var(--bg); color:var(--text); font:14px/1.55 system-ui,"Microsoft YaHei",sans-serif; }
+      main { max-width:1000px; margin:auto; display:grid; gap:18px; }
+      header { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+      h1 { margin:0; font-size:23px; } h2 { margin:0 0 14px; font-size:17px; }
+      p { color:var(--muted); margin:6px 0; }
+      .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; }
+      .card, section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; }
+      .metric { font-size:23px; font-weight:650; margin-top:4px; }
+      label { display:block; margin:12px 0 5px; font-weight:600; }
+      input, select, button { font:inherit; }
+      input { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; color:var(--text); background:var(--panel); }
+      button { padding:9px 13px; border:0; border-radius:8px; color:white; background:var(--accent); cursor:pointer; }
+      button.secondary { color:var(--text); background:transparent; border:1px solid var(--line); }
+      button.danger { color:var(--danger); background:transparent; border:1px solid var(--line); }
+      button:disabled { opacity:.55; cursor:wait; }
+      .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+      .row input { flex:1 1 220px; }
+      .list { display:grid; gap:8px; }
+      .item { display:flex; align-items:center; justify-content:space-between; gap:12px; border-top:1px solid var(--line); padding-top:10px; overflow-wrap:anywhere; }
+      .item:first-child { border-top:0; padding-top:0; }
+      .qr { width:220px; height:220px; object-fit:contain; background:white; border-radius:8px; display:none; margin:12px 0; }
+      .notice { min-height:22px; color:var(--muted); }
+      .notice.error { color:var(--danger); }
+      .mono { font-family:ui-monospace,Consolas,monospace; font-size:12px; color:var(--muted); }
+      @media (max-width:600px) { body { padding:14px; } header { align-items:flex-start; flex-direction:column; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div><h1>燕云十六声资讯管理</h1><p>凭据在插件数据目录中加密保存。</p></div>
+        <button id="refresh" class="secondary">刷新状态</button>
+      </header>
+      <section>
+        <h2>运行状态</h2>
+        <div class="grid">
+          <div class="card"><div>插件</div><div class="metric" id="enabled">读取中</div></div>
+          <div class="card"><div>B 站登录</div><div class="metric" id="credential">读取中</div><p id="account"></p></div>
+          <div class="card"><div>监控 UP 主</div><div class="metric" id="subscriptions">0</div></div>
+          <div class="card"><div>推送目标</div><div class="metric" id="target-count">0</div></div>
+        </div>
+        <p id="queue" class="notice"></p>
+      </section>
+      <section>
+        <h2>B 站扫码登录</h2>
+        <p>二维码最多有效 3 分钟；网络异常时会退避并停止本次登录流程。</p>
+        <div class="row"><button id="start-login">生成二维码</button><span id="login-message" class="notice"></span></div>
+        <img id="qr" class="qr" alt="B 站登录二维码" />
+        <div class="row"><button id="remove-credential" class="danger">退出 B 站登录</button></div>
+        <details>
+          <summary>手动 Cookie 备用录入</summary>
+          <p>仅通过 AstrBot 管理页提交，不经聊天消息传输。</p>
+          <form id="cookie-form">
+            <label for="sessdata">SESSDATA</label><input id="sessdata" type="password" autocomplete="off" required />
+            <label for="bili-jct">bili_jct</label><input id="bili-jct" type="password" autocomplete="off" required />
+            <label for="dedeuserid">DedeUserID</label><input id="dedeuserid" type="password" autocomplete="off" required />
+            <label for="buvid3">BUVID3（可留空）</label><input id="buvid3" type="password" autocomplete="off" />
+            <div class="row" style="margin-top:12px"><button type="submit">加密保存</button><span id="cookie-message" class="notice"></span></div>
+          </form>
+        </details>
+      </section>
+      <section>
+        <h2>B 站动态测试推送</h2>
+        <p>输入动态 ID 后，插件会读取结构化动态并通过 Outbox 推送到所有已启用目标；此操作不会推进监控游标。</p>
+        <form id="test-push-form">
+          <label for="dynamic-id">B 站动态 ID</label>
+          <div class="row">
+            <input id="dynamic-id" inputmode="numeric" autocomplete="off" placeholder="例如 1252945138288689153" required />
+            <button id="test-push-button" type="submit">测试推送</button>
+          </div>
+          <div id="test-push-message" class="notice" aria-live="polite"></div>
+        </form>
+      </section>
+      <section>
+        <h2>推送目标</h2>
+        <p>也可在目标会话中使用 `/yyslsnews target-add` 自动登记。</p>
+        <form id="target-form">
+          <label for="umo">Unified Message Origin</label>
+          <input id="umo" autocomplete="off" placeholder="platform:message_type:session_id" required />
+          <label for="target-name">显示名称（可选）</label>
+          <div class="row"><input id="target-name" autocomplete="off" /><button type="submit">添加目标</button></div>
+          <div id="target-message" class="notice"></div>
+        </form>
+        <div id="targets" class="list" style="margin-top:16px"></div>
+      </section>
+      <section>
+        <h2>最近失败的推送</h2>
+        <div id="failures" class="list"><p>读取中</p></div>
+      </section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

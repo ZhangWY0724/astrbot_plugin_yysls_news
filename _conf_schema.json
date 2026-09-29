@@ -1,0 +1,57 @@
+{
+  "enabled": {
+    "description": "启用后台采集与推送",
+    "type": "bool",
+    "default": true
+  },
+  "admin_ids": {
+    "description": "管理命令管理员 ID（每行一个）",
+    "type": "text",
+    "default": ""
+  },
+  "bilibili_uids": {
+    "description": "监控 B 站 UID（每行一个）",
+    "type": "text",
+    "default": ""
+  },
+  "bilibili_poll_interval_seconds": {
+    "description": "B 站轮询周期（至少 300 秒）",
+    "type": "int",
+    "default": 300
+  },
+  "bilibili_filter_types": {
+    "description": "忽略动态类型（每行一项）",
+    "type": "text",
+    "default": ""
+  },
+  "bilibili_filter_keywords": {
+    "description": "忽略含关键词的动态（每行一项）",
+    "type": "text",
+    "default": ""
+  },
+  "yysls_enabled": {
+    "description": "监控燕云十六声官网新闻",
+    "type": "bool",
+    "default": true
+  },
+  "yysls_url": {
+    "description": "官网新闻列表页 URL",
+    "type": "string",
+    "default": "https://www.yysls.cn/news/"
+  },
+  "yysls_category": {
+    "description": "官网新闻分类名",
+    "type": "string",
+    "default": "最新"
+  },
+  "yysls_poll_interval_seconds": {
+    "description": "官网轮询周期（至少 600 秒）",
+    "type": "int",
+    "default": 600
+  },
+  "http_timeout_seconds": {
+    "description": "网络请求超时秒数",
+    "type": "int",
+    "default": 20
+  }
+}

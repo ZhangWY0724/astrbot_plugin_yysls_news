@@ -1,0 +1,8 @@
+name: astrbot_plugin_yysls_news
+display_name: 燕云十六声资讯监控
+desc: 监控 B 站 UP 主动态和燕云十六声官网新闻，并通过 AstrBot 推送图片。
+version: v0.1.13
+author: yyslsnews
+support_platforms:
+  - aiocqhttp
+astrbot_version: ">=4.24.2,<5"
